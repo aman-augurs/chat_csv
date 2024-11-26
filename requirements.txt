@@ -1,0 +1,16 @@
+# crewai
+transformers
+torch
+datasets
+huggingface_hub
+accelerate
+streamlit
+google-generativeai
+python-dotenv
+langchain
+chromadb
+faiss-cpu
+langchain_google_genai
+langchain-community
+PyPDF2
+sentence-transformers

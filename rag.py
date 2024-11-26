@@ -5,16 +5,19 @@ from PyPDF2 import PdfReader
 from sentence_transformers import SentenceTransformer
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
-from langchain.vectorstores.utils import DistanceStrategy
-from langchain.embeddings import HuggingFaceEmbeddings
+from langchain_community.vectorstores.utils import DistanceStrategy
+from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain.chains import RetrievalQA
-from langchain_community.llms import HuggingFacePipeline
+from langchain_huggingface import HuggingFacePipeline
+from langchain_huggingface.llms import HuggingFacePipeline
+from langchain_core.prompts import PromptTemplate
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 import torch
 
 # Custom Embedding Wrapper
-class SentenceTransformerEmbeddings:
+class CustomEmbeddings(HuggingFaceEmbeddings):
     def __init__(self, model_name="paraphrase-multilingual-MiniLM-L12-v2"):
+        super().__init__(model_name=model_name)
         self.model = SentenceTransformer(model_name)
     
     def embed_documents(self, texts):
@@ -44,8 +47,8 @@ def get_text_chunks(text):
 # Create vector store
 def create_vector_store(text_chunks):
     try:
-        # Use custom embedding wrapper
-        embeddings = SentenceTransformerEmbeddings(
+        # Use custom embeddings
+        embeddings = CustomEmbeddings(
             model_name="paraphrase-multilingual-MiniLM-L12-v2"
         )
         
@@ -66,8 +69,8 @@ def create_vector_store(text_chunks):
 # Load vector store
 def load_vector_store():
     try:
-        # Use custom embedding wrapper
-        embeddings = SentenceTransformerEmbeddings(
+        # Use custom embeddings
+        embeddings = CustomEmbeddings(
             model_name="paraphrase-multilingual-MiniLM-L12-v2"
         )
         

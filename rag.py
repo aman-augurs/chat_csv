@@ -1,13 +1,27 @@
 import streamlit as st
 import os
+import numpy as np
 from PyPDF2 import PdfReader
 from sentence_transformers import SentenceTransformer
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
+from langchain.vectorstores.utils import DistanceStrategy
+from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.chains import RetrievalQA
 from langchain_community.llms import HuggingFacePipeline
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 import torch
+
+# Custom Embedding Wrapper
+class SentenceTransformerEmbeddings:
+    def __init__(self, model_name="paraphrase-multilingual-MiniLM-L12-v2"):
+        self.model = SentenceTransformer(model_name)
+    
+    def embed_documents(self, texts):
+        return self.model.encode(texts).tolist()
+    
+    def embed_query(self, text):
+        return self.model.encode([text])[0].tolist()
 
 # Function to extract text from PDFs
 def get_pdf_text(pdf_docs):
@@ -30,15 +44,16 @@ def get_text_chunks(text):
 # Create vector store
 def create_vector_store(text_chunks):
     try:
-        # Use a lightweight multilingual embedding model
-        embedding_model = SentenceTransformer(
-            "paraphrase-multilingual-MiniLM-L12-v2"
+        # Use custom embedding wrapper
+        embeddings = SentenceTransformerEmbeddings(
+            model_name="paraphrase-multilingual-MiniLM-L12-v2"
         )
         
         # Create vector store
         vector_store = FAISS.from_texts(
             texts=text_chunks, 
-            embedding=embedding_model
+            embedding=embeddings,
+            distance_strategy=DistanceStrategy.COSINE
         )
         
         # Save vector store
@@ -51,10 +66,13 @@ def create_vector_store(text_chunks):
 # Load vector store
 def load_vector_store():
     try:
-        embedding_model = SentenceTransformer(
-            "paraphrase-multilingual-MiniLM-L12-v2"
+        # Use custom embedding wrapper
+        embeddings = SentenceTransformerEmbeddings(
+            model_name="paraphrase-multilingual-MiniLM-L12-v2"
         )
-        return FAISS.load_local("faiss_index", embedding_model)
+        
+        # Load vector store
+        return FAISS.load_local("faiss_index", embeddings)
     except Exception as e:
         st.error(f"Vector store loading error: {e}")
         return None
